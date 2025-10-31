@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
-  User,
-  Mail,
-  Phone,
+  Compass,
   Coins,
   Flag,
-  Compass,
+  Mail,
+  Phone,
+  Save,
+  User,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -618,6 +620,7 @@ const LeadForm = ({
             onClick={onClose}
             className="bg-red-500 text-white hover:bg-red-400 hover:cursor-pointer"
           >
+            <XCircle className="mr-2 h-4 w-4" />
             Cancelar
           </Button>
         )}
@@ -626,7 +629,17 @@ const LeadForm = ({
           disabled={isSubmitting}
           className="bg-yellow-500 text-black hover:bg-yellow-400 hover:cursor-pointer"
         >
-          {mode === "create" ? "Criar lead" : "Salvar alterações"}
+          {mode === "create" ? (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Criar lead
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Salvar alterações
+            </>
+          )}
         </Button>
       </div>
     </form>

@@ -1,9 +1,21 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2, Mail, Phone, User, Plus, Search, Save, XCircle } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  Phone,
+  User,
+  Plus,
+  Search,
+  Save,
+  Pencil,
+  XCircle,
+  Trash2,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -38,8 +50,18 @@ import {
 import {
   useCreateContact,
   useUpdateContact,
+  useDeleteContact,
 } from "@/hooks/queries/useContacts";
+import { usePostalCodeLookup } from "@/hooks/usePostalCodeLookup";
 import { companySchema, type CompanyFormData } from "@/lib/validations/company";
+import {
+  formatCEP,
+  formatPhone,
+  maskCep,
+  maskPhone,
+  sanitizeCep,
+  sanitizePhone,
+} from "@/lib/formatters";
 import type { CreateCompanyDto } from "@/types/company";
 import type { Contact } from "@/types/company";
 
@@ -63,6 +85,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
   const updateCompany = useUpdateCompany();
   const createContact = useCreateContact();
   const updateContact = useUpdateContact();
+  const deleteContactMutation = useDeleteContact();
   const { data: existingClient, isLoading: isLoadingClient } = useCompany(
     clientId!
   );
@@ -72,14 +95,143 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
+    setError,
+    clearErrors,
   } = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
   });
+
+  const { fetchPostalCode, isFetchingPostalCode, resetPostalCodeLookup } =
+    usePostalCodeLookup();
+
+  const [hasFetchedAddress, setHasFetchedAddress] = useState(false);
+  const [isNumeroEditable, setIsNumeroEditable] = useState(false);
+  const lastFetchedCepRef = useRef<string | null>(null);
+
+  const cepValue = watch("cep");
+
+  const handleCepInputChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const maskedCep = maskCep(event.target.value);
+      event.target.value = maskedCep;
+      clearErrors("cep");
+    },
+    [clearErrors]
+  );
+
+  const cepField = register("cep", { onChange: handleCepInputChange });
+
+  const handlePhoneInputChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const maskedPhone = maskPhone(event.target.value);
+      event.target.value = maskedPhone;
+    },
+    []
+  );
+
+  const contactPhoneField = register("contact.phone", {
+    onChange: handlePhoneInputChange,
+  });
+
+  const resetAddressFields = useCallback(() => {
+    setValue("endereco", "");
+    setValue("bairro", "");
+    setValue("cidade", "");
+    setValue("estado", "");
+    setValue("complemento", "");
+    setValue("numero", "");
+    setHasFetchedAddress(false);
+    setIsNumeroEditable(false);
+  }, [setValue]);
+
+  const handleCepLookup = useCallback(
+    async (sanitizedCep: string) => {
+      try {
+        const postalCode = await fetchPostalCode(sanitizedCep);
+        if (lastFetchedCepRef.current !== sanitizedCep) {
+          return;
+        }
+
+        if (!postalCode) {
+          resetAddressFields();
+          setError("cep", {
+            type: "manual",
+            message: "CEP não encontrado",
+          });
+          toast.error("CEP não encontrado", {
+            description: "Não localizamos o endereço para este CEP.",
+          });
+          lastFetchedCepRef.current = null;
+          return;
+        }
+
+        clearErrors("cep");
+
+        setValue("cep", formatCEP(sanitizedCep), {
+          shouldDirty: true,
+        });
+        setValue("endereco", postalCode.street ?? "", {
+          shouldDirty: true,
+        });
+        setValue("bairro", postalCode.neighborhood ?? "", {
+          shouldDirty: true,
+        });
+        setValue("cidade", postalCode.city?.name ?? "", {
+          shouldDirty: true,
+        });
+        setValue("estado", postalCode.state.acronym ?? "", {
+          shouldDirty: true,
+        });
+        setValue("complemento", postalCode.complement ?? "", {
+          shouldDirty: true,
+        });
+
+        const isSameAsExistingCep =
+          isEditMode &&
+          existingClient &&
+          sanitizeCep(existingClient.cep ?? "") === sanitizedCep;
+
+        setValue("numero", isSameAsExistingCep ? existingClient.numero : "", {
+          shouldDirty: !isSameAsExistingCep,
+        });
+
+        setHasFetchedAddress(true);
+        setIsNumeroEditable(true);
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+        if (lastFetchedCepRef.current !== sanitizedCep) {
+          return;
+        }
+
+        resetAddressFields();
+        setError("cep", {
+          type: "manual",
+          message: "Não foi possível buscar o CEP",
+        });
+        toast.error("Erro ao consultar CEP", {
+          description: "Verifique a conexão e tente novamente.",
+        });
+        lastFetchedCepRef.current = null;
+      }
+    },
+    [
+      clearErrors,
+      existingClient,
+      fetchPostalCode,
+      isEditMode,
+      resetAddressFields,
+      setError,
+      setValue,
+    ]
+  );
 
   // Preenche o formulário quando estiver em modo de edição
   useEffect(() => {
     if (isEditMode && existingClient) {
       const primaryContact = existingClient.contacts?.[0];
+      const sanitizedExistingCep = sanitizeCep(existingClient.cep ?? "");
       reset({
         cnpj: existingClient.cnpj,
         razaoSocial: existingClient.razaoSocial,
@@ -89,17 +241,54 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
         numero: existingClient.numero,
         complemento: existingClient.complemento || "",
         bairro: existingClient.bairro,
-        cep: existingClient.cep,
+        cep:
+          sanitizedExistingCep.length === 8
+            ? formatCEP(sanitizedExistingCep)
+            : existingClient.cep,
         cidade: existingClient.cidade,
         estado: existingClient.estado,
         contact: {
           name: primaryContact?.name || "",
           email: primaryContact?.email || "",
-          phone: primaryContact?.phone ? String(primaryContact.phone) : "",
+          phone: primaryContact?.phone
+            ? formatPhone(String(primaryContact.phone))
+            : "",
         },
       });
+      setHasFetchedAddress(true);
+      setIsNumeroEditable(true);
+      lastFetchedCepRef.current =
+        sanitizedExistingCep.length === 8 ? sanitizedExistingCep : null;
     }
   }, [isEditMode, existingClient, reset]);
+
+  useEffect(() => {
+    const sanitizedCep = sanitizeCep(cepValue ?? "");
+
+    if (sanitizedCep.length !== 8) {
+      if (hasFetchedAddress) {
+        resetAddressFields();
+      }
+      resetPostalCodeLookup();
+      clearErrors("cep");
+      lastFetchedCepRef.current = null;
+      return;
+    }
+
+    if (sanitizedCep === lastFetchedCepRef.current && hasFetchedAddress) {
+      return;
+    }
+
+    lastFetchedCepRef.current = sanitizedCep;
+    void handleCepLookup(sanitizedCep);
+  }, [
+    cepValue,
+    clearErrors,
+    handleCepLookup,
+    hasFetchedAddress,
+    resetAddressFields,
+    resetPostalCodeLookup,
+  ]);
 
   const buildCompanyPayload = (formData: CompanyFormData): CreateCompanyDto => {
     return {
@@ -107,7 +296,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
       contact: {
         ...formData.contact,
         phone: formData.contact.phone
-          ? Number(formData.contact.phone)
+          ? Number(sanitizePhone(formData.contact.phone))
           : undefined,
       },
     };
@@ -148,7 +337,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
     setContactFormData({
       name: contact.name,
       email: contact.email,
-      phone: contact.phone ? String(contact.phone) : "",
+      phone: contact.phone ? formatPhone(String(contact.phone)) : "",
     });
   };
 
@@ -182,7 +371,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
           name: contactFormData.name,
           email: contactFormData.email,
           phone: contactFormData.phone
-            ? Number(contactFormData.phone)
+            ? Number(sanitizePhone(contactFormData.phone))
             : undefined,
           companyId: clientId!,
         });
@@ -204,7 +393,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
           data: {
             ...contactFormData,
             phone: contactFormData.phone
-              ? Number(contactFormData.phone)
+              ? Number(sanitizePhone(contactFormData.phone))
               : undefined,
           },
         });
@@ -311,6 +500,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
               <Input
                 id="endereco"
                 placeholder="Rua, Avenida, etc."
+                disabled
                 {...register("endereco")}
               />
               {errors.endereco && (
@@ -322,7 +512,12 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
 
             <div className="space-y-2">
               <Label htmlFor="numero">Número *</Label>
-              <Input id="numero" placeholder="123" {...register("numero")} />
+              <Input
+                id="numero"
+                placeholder="123"
+                disabled={!isNumeroEditable}
+                {...register("numero")}
+              />
               {errors.numero && (
                 <p className="text-sm text-red-500">{errors.numero.message}</p>
               )}
@@ -333,13 +528,19 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
               <Input
                 id="complemento"
                 placeholder="Apto, Sala, etc."
+                //disabled
                 {...register("complemento")}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="bairro">Bairro *</Label>
-              <Input id="bairro" placeholder="Bairro" {...register("bairro")} />
+              <Input
+                id="bairro"
+                placeholder="Bairro"
+                disabled
+                {...register("bairro")}
+              />
               {errors.bairro && (
                 <p className="text-sm text-red-500">{errors.bairro.message}</p>
               )}
@@ -347,7 +548,19 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
 
             <div className="space-y-2">
               <Label htmlFor="cep">CEP *</Label>
-              <Input id="cep" placeholder="00000-000" {...register("cep")} />
+              <div className="relative">
+                <Input
+                  id="cep"
+                  placeholder="00000-000"
+                  maxLength={9}
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  {...cepField}
+                />
+                {isFetchingPostalCode && (
+                  <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin" />
+                )}
+              </div>
               {errors.cep && (
                 <p className="text-sm text-red-500">{errors.cep.message}</p>
               )}
@@ -355,7 +568,12 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
 
             <div className="space-y-2">
               <Label htmlFor="cidade">Cidade *</Label>
-              <Input id="cidade" placeholder="Cidade" {...register("cidade")} />
+              <Input
+                id="cidade"
+                placeholder="Cidade"
+                disabled
+                {...register("cidade")}
+              />
               {errors.cidade && (
                 <p className="text-sm text-red-500">{errors.cidade.message}</p>
               )}
@@ -367,6 +585,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
                 id="estado"
                 placeholder="SP"
                 maxLength={2}
+                disabled
                 {...register("estado")}
               />
               {errors.estado && (
@@ -419,7 +638,10 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
                 <Input
                   id="contact.phone"
                   placeholder="(00) 00000-0000"
-                  {...register("contact.phone")}
+                  maxLength={15}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  {...contactPhoneField}
                 />
               </div>
             </div>
@@ -525,16 +747,54 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            className="hover:cursor-pointer"
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEditContact(contact)}
-                            title="Editar contato"
-                          >
-                            <Save className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              className="hover:cursor-pointer hover:bg-yellow-400!"
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEditContact(contact)}
+                              title="Editar contato"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              className="hover:bg-red-300! text-red-500! hover:cursor-pointer"
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              disabled={deleteContactMutation.isPending}
+                              onClick={() =>
+                                void deleteContactMutation.mutateAsync(
+                                  contact.id!,
+                                  {
+                                    onSuccess: () => {
+                                      toast.success("Contato removido", {
+                                        description: `${contact.name} foi excluído.`,
+                                      });
+                                    },
+                                    onError: (error) => {
+                                      console.error(
+                                        "Erro ao excluir contato:",
+                                        error
+                                      );
+                                      toast.error("Erro ao remover contato", {
+                                        description:
+                                          "Tente novamente em instantes.",
+                                      });
+                                    },
+                                  }
+                                )
+                              }
+                              title="Excluir contato"
+                            >
+                              {deleteContactMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -614,6 +874,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
               onClick={handleCloseModal}
               disabled={createContact.isPending || updateContact.isPending}
             >
+              <XCircle className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
             <Button
@@ -625,7 +886,17 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
               {(createContact.isPending || updateContact.isPending) && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {isAddingContact ? "Adicionar" : "Salvar"}
+              {isAddingContact ? (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Adicionar
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Salvar
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

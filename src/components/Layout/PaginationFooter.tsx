@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface PaginationFooterProps {
   page: number;
@@ -65,6 +66,7 @@ const PaginationFooter = ({
           onClick={() => onPageChange(Math.max(page - 1, 1))}
           disabled={previousDisabled}
         >
+          <ChevronLeft className="mr-2 h-4 w-4" />
           Anterior
         </Button>
         <span className="text-sm font-medium">
@@ -77,6 +79,7 @@ const PaginationFooter = ({
           disabled={nextDisabled}
         >
           Próxima
+          <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>
