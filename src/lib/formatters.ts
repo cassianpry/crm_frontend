@@ -1,16 +1,34 @@
-export const formatCNPJ = (cnpj: string): string => {
-  // Remove tudo que não é dígito
-  const cleaned = cnpj.replace(/\D/g, '');
+export const sanitizeCnpj = (cnpj: string): string => cnpj.replace(/\D/g, "");
 
-  // Aplica a máscara 00.000.000/0000-00
-  if (cleaned.length === 14) {
-    return cleaned.replace(
-      /^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,
-      '$1.$2.$3/$4-$5'
-    );
+export const maskCnpj = (cnpj: string): string => {
+  const digitsOnly = sanitizeCnpj(cnpj).slice(0, 14);
+
+  if (digitsOnly.length <= 2) {
+    return digitsOnly;
   }
 
-  // Retorna o valor original se não tiver 14 dígitos
+  if (digitsOnly.length <= 5) {
+    return `${digitsOnly.slice(0, 2)}.${digitsOnly.slice(2)}`;
+  }
+
+  if (digitsOnly.length <= 8) {
+    return `${digitsOnly.slice(0, 2)}.${digitsOnly.slice(2, 5)}.${digitsOnly.slice(5)}`;
+  }
+
+  if (digitsOnly.length <= 12) {
+    return `${digitsOnly.slice(0, 2)}.${digitsOnly.slice(2, 5)}.${digitsOnly.slice(5, 8)}/${digitsOnly.slice(8)}`;
+  }
+
+  return `${digitsOnly.slice(0, 2)}.${digitsOnly.slice(2, 5)}.${digitsOnly.slice(5, 8)}/${digitsOnly.slice(8, 12)}-${digitsOnly.slice(12)}`;
+};
+
+export const formatCNPJ = (cnpj: string): string => {
+  const cleaned = sanitizeCnpj(cnpj);
+
+  if (cleaned.length === 14) {
+    return `${cleaned.slice(0, 2)}.${cleaned.slice(2, 5)}.${cleaned.slice(5, 8)}/${cleaned.slice(8, 12)}-${cleaned.slice(12)}`;
+  }
+
   return cnpj;
 };
 

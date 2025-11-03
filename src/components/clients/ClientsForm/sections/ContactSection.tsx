@@ -35,6 +35,7 @@ export function ContactSection({
               id="contact.name"
               placeholder="Nome completo"
               {...register("contact.name")}
+              autoComplete="off"
             />
             {errors.contact?.name && (
               <p className="text-sm text-red-500">
@@ -50,6 +51,7 @@ export function ContactSection({
               type="email"
               placeholder="contato@empresa.com"
               {...register("contact.email")}
+              autoComplete="off"
             />
             {errors.contact?.email && (
               <p className="text-sm text-red-500">
@@ -65,7 +67,7 @@ export function ContactSection({
               placeholder="(00) 00000-0000"
               maxLength={15}
               inputMode="tel"
-              autoComplete="tel"
+              autoComplete="off"
               {...contactPhoneField}
             />
           </div>

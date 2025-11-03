@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useDeleteCompany } from "@/hooks/queries/useCompanies";
-import type { DeleteDialogState } from "../../components/clients/ClientsList/types";
+import type { DeleteDialogState } from "@/types/company";
 
 export function useDeleteDialog() {
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({

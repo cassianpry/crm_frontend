@@ -1,9 +1,5 @@
 import { useState } from "react";
-import type {
-  SortField,
-  SortOrder,
-} from "../../components/clients/ClientsList/types";
-import type { Company } from "@/types/company";
+import type { Company, SortField, SortOrder } from "@/types/company";
 
 export function useClientsSort() {
   const [sortField, setSortField] = useState<SortField | null>(null);

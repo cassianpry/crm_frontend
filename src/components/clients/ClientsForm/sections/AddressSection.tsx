@@ -40,6 +40,7 @@ export function AddressSection({
               id="endereco"
               placeholder="Rua, Avenida, etc."
               disabled
+              autoComplete="off"
               {...register("endereco")}
             />
             {errors.endereco && (
@@ -55,6 +56,7 @@ export function AddressSection({
               id="numero"
               placeholder="123"
               disabled={!isNumeroEditable}
+              autoComplete="off"
               {...register("numero")}
             />
             {errors.numero && (
@@ -67,6 +69,7 @@ export function AddressSection({
             <Input
               id="complemento"
               placeholder="Apto, Sala, etc."
+              autoComplete="off"
               {...register("complemento")}
             />
           </div>
@@ -77,6 +80,7 @@ export function AddressSection({
               id="bairro"
               placeholder="Bairro"
               disabled
+              autoComplete="off"
               {...register("bairro")}
             />
             {errors.bairro && (
@@ -92,7 +96,7 @@ export function AddressSection({
                 placeholder="00000-000"
                 maxLength={9}
                 inputMode="numeric"
-                autoComplete="postal-code"
+                autoComplete="off"
                 {...cepField}
               />
               {isFetchingPostalCode && (
@@ -110,6 +114,7 @@ export function AddressSection({
               id="cidade"
               placeholder="Cidade"
               disabled
+              autoComplete="off"
               {...register("cidade")}
             />
             {errors.cidade && (
@@ -124,6 +129,7 @@ export function AddressSection({
               placeholder="SP"
               maxLength={2}
               disabled
+              autoComplete="off"
               {...register("estado")}
             />
             {errors.estado && (

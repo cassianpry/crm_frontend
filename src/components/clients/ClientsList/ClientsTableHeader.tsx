@@ -11,7 +11,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { SortField } from "./types";
+import type { SortField } from "@/types/company";
 
 interface ClientsTableHeaderProps {
   onSort: (field: SortField) => void;

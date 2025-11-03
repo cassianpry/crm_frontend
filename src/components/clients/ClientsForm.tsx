@@ -115,6 +115,7 @@ const ClientsForm = ({ clientId }: ClientsFormProps) => {
         register={register}
         errors={errors}
         isEditMode={isEditMode}
+        setValue={setValue}
       />
 
       <AddressSection
