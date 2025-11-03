@@ -59,3 +59,17 @@ export interface CreateCompanyDto {
 }
 
 export type UpdateCompanyDto = Partial<CreateCompanyDto>;
+
+export type SortField =
+  | "cnpj"
+  | "nomeFantasia"
+  | "razaoSocial"
+  | "industria"
+  | "cidade";
+
+export type SortOrder = "asc" | "desc" | null;
+
+export interface DeleteDialogState {
+  open: boolean;
+  company: { id: number; nomeFantasia: string } | null;
+}
