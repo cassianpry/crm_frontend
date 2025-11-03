@@ -33,7 +33,7 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <div className="flex items-center justify-center h-20">
+              <div className="flex items-center justify-center h-20 bg-white hover:bg-slate-100">
                 <a href="#" className="flex items-center justify-center">
                   <img
                     src={
@@ -62,10 +62,15 @@ const AppSidebar = ({ ...props }: React.ComponentProps<typeof Sidebar>) => {
                     className={`hover:bg-yellow-100 ${
                       activeItem === item.url
                         ? "bg-yellow-500 hover:bg-yellow-500"
-                        : ""
+                        : "dark:hover:text-black"
                     }`}
                   >
-                    <Link to={item.url}>
+                    <Link
+                      to={item.url}
+                      className={`${
+                        activeItem === item.url ? "text-black" : ""
+                      }`}
+                    >
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>

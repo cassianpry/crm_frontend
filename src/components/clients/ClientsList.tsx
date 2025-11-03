@@ -202,7 +202,7 @@ const ClientsList = () => {
                     {getSortIcon("nomeFantasia")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden sm:table-cell">
                   <button
                     onClick={() => handleSort("razaoSocial")}
                     className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -212,7 +212,7 @@ const ClientsList = () => {
                     {getSortIcon("razaoSocial")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden md:table-cell">
                   <button
                     onClick={() => handleSort("cnpj")}
                     className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -222,7 +222,7 @@ const ClientsList = () => {
                     {getSortIcon("cnpj")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden lg:table-cell">
                   <button
                     onClick={() => handleSort("industria")}
                     className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -232,7 +232,7 @@ const ClientsList = () => {
                     {getSortIcon("industria")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden lg:table-cell">
                   <button
                     onClick={() => handleSort("cidade")}
                     className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -242,13 +242,13 @@ const ClientsList = () => {
                     {getSortIcon("cidade")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden xl:table-cell">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4" />
                     Contato
                   </div>
                 </TableHead>
-                <TableHead className="text-right sticky right-0 bg-background z-20 shadow-[0_0_0_1px_var(--border)]">
+                <TableHead className="text-right sticky right-0 bg-background dark:bg-neutral-900 z-20 shadow-[0_0_0_1px_var(--border)]">
                   <div className="flex items-center justify-end gap-2">
                     <Settings className="h-4 w-4" />
                     Ações
@@ -270,35 +270,44 @@ const ClientsList = () => {
                 </TableRow>
               ) : (
                 sortedCompanies.map((company: Company) => (
-                  <TableRow key={company.id} className="hover:bg-yellow-100">
-                    <TableCell>{company.nomeFantasia}</TableCell>
-                    <TableCell>{company.razaoSocial}</TableCell>
-                    <TableCell className="font-medium">
+                  <TableRow
+                    key={company.id}
+                    className="group hover:bg-yellow-100"
+                  >
+                    <TableCell className="transition-colors group-hover:text-black dark:group-hover:text-black">
+                      {company.nomeFantasia}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell transition-colors group-hover:text-black dark:group-hover:text-black">
+                      {company.razaoSocial}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell font-medium transition-colors group-hover:text-black dark:group-hover:text-black">
                       {formatCNPJ(company.cnpj)}
                     </TableCell>
-                    <TableCell>{company.industria}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell transition-colors group-hover:text-black dark:group-hover:text-black">
+                      {company.industria}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell transition-colors group-hover:text-black dark:group-hover:text-black">
                       {company.cidade}/{company.estado}
                     </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div className="font-medium">
+                    <TableCell className="hidden xl:table-cell transition-colors">
+                      <div className="text-sm transition-colors group-hover:text-black dark:group-hover:text-black">
+                        <div className="font-medium transition-colors group-hover:text-black dark:group-hover:text-black">
                           {company.contacts[0]?.name || "-"}
                         </div>
                         {company.contacts[0]?.phone && (
-                          <div className="text-muted-foreground">
+                          <div className="text-muted-foreground transition-colors group-hover:text-black dark:group-hover:text-black">
                             {company.contacts[0].phone}
                           </div>
                         )}
-                        <div className="text-muted-foreground text-xs">
+                        <div className="text-muted-foreground text-xs transition-colors group-hover:text-black dark:group-hover:text-black">
                           {company.contacts[0]?.email || "-"}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right sticky right-0 bg-background z-10 shadow-[0_0_0_1px_var(--border)]">
+                    <TableCell className="text-right sticky right-0 bg-background dark:bg-neutral-900! z-10 shadow-[0_0_0_1px_var(--border)] transition-colors">
                       <div className="flex justify-end gap-2">
                         <Button
-                          className="hover:cursor-pointer hover:bg-yellow-400"
+                          className="hover:cursor-pointer hover:bg-yellow-400!"
                           variant="ghost"
                           size="icon"
                           title="Editar"
@@ -309,7 +318,7 @@ const ClientsList = () => {
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
-                          className="hover:cursor-pointer hover:bg-red-300"
+                          className="hover:cursor-pointer hover:bg-red-300!"
                           variant="ghost"
                           size="icon"
                           title="Excluir"

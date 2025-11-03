@@ -280,7 +280,7 @@ const ContactsList = ({ onEditContact }: ContactsListProps) => {
                     {getSortIcon("name")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden sm:table-cell">
                   <button
                     onClick={() => handleSort("email")}
                     className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -290,7 +290,7 @@ const ContactsList = ({ onEditContact }: ContactsListProps) => {
                     {getSortIcon("email")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden md:table-cell">
                   <button
                     onClick={() => handleSort("phone")}
                     className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -300,7 +300,7 @@ const ContactsList = ({ onEditContact }: ContactsListProps) => {
                     {getSortIcon("phone")}
                   </button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="hidden lg:table-cell">
                   <button
                     onClick={() => handleSort("company")}
                     className="flex items-center gap-2 hover:text-foreground transition-colors"
@@ -310,8 +310,8 @@ const ContactsList = ({ onEditContact }: ContactsListProps) => {
                     {getSortIcon("company")}
                   </button>
                 </TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="text-right sticky right-0 bg-background z-20 shadow-[0_0_0_1px_var(--border)]">
+                <TableHead className="text-center hidden xl:table-cell">Status</TableHead>
+                <TableHead className="text-right sticky right-0 bg-background dark:bg-neutral-900 z-20 shadow-[0_0_0_1px_var(--border)]">
                   <div className="flex items-center justify-end gap-2">
                     <Settings className="h-4 w-4" />
                     Ações
@@ -333,21 +333,26 @@ const ContactsList = ({ onEditContact }: ContactsListProps) => {
                 </TableRow>
               ) : (
                 sortedContacts.map((contact: Contact) => (
-                  <TableRow key={contact.id} className="hover:bg-yellow-100">
-                    <TableCell className="font-medium">
+                  <TableRow
+                    key={contact.id}
+                    className="group hover:bg-yellow-100 dark:hover:bg-yellow-200"
+                  >
+                    <TableCell className="font-medium transition-colors group-hover:text-black dark:group-hover:text-black">
                       {contact.name}
                     </TableCell>
-                    <TableCell>{contact.email}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell transition-colors group-hover:text-black dark:group-hover:text-black">
+                      {contact.email}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell transition-colors group-hover:text-black dark:group-hover:text-black">
                       {contact.phone ? formatPhone(String(contact.phone)) : "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell transition-colors">
                       {contact.company ? (
-                        <div className="text-sm">
-                          <div className="font-medium">
+                        <div className="text-sm transition-colors group-hover:text-black dark:group-hover:text-black">
+                          <div className="font-medium transition-colors group-hover:text-black dark:group-hover:text-black">
                             {contact.company.nomeFantasia}
                           </div>
-                          <div className="text-muted-foreground text-xs">
+                          <div className="text-muted-foreground text-xs transition-colors group-hover:text-black dark:group-hover:text-black">
                             {contact.company.razaoSocial}
                           </div>
                         </div>
@@ -355,7 +360,7 @@ const ContactsList = ({ onEditContact }: ContactsListProps) => {
                         "-"
                       )}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="hidden xl:table-cell text-center transition-colors">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           contact.isActive
@@ -366,7 +371,7 @@ const ContactsList = ({ onEditContact }: ContactsListProps) => {
                         {contact.isActive ? "Ativo" : "Inativo"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right sticky right-0 bg-background z-10 shadow-[0_0_0_1px_var(--border)]">
+                    <TableCell className="text-right sticky right-0 bg-background dark:bg-neutral-900 z-10 shadow-[0_0_0_1px_var(--border)] transition-colors">
                       <div className="flex justify-end gap-2">
                         <Button
                           className="hover:cursor-pointer hover:bg-yellow-400"

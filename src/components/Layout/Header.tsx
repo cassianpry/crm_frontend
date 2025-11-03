@@ -1,44 +1,18 @@
-import {
-  // Bell,
-  // Settings,
-  Menu,
-  Sun,
-} from "lucide-react";
+import { Menu, Sun, Moon, User, LogOut } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { SidebarTrigger } from "../ui/sidebar";
 import { Button } from "../ui/button";
-// import UserProfile from "./UserProfile";
-// import { Building2 } from "lucide-react";
-
-//Profile Items
-// const items = [
-//   {
-//     title: "Menu 1",
-//     url: "#",
-//     icon: Building2,
-//   },
-//   {
-//     title: "Menu 2",
-//     url: "#",
-//     icon: Building2,
-//   },
-//   {
-//     title: "Menu 3",
-//     url: "#",
-//     icon: Building2,
-//   },
-//   {
-//     title: "Menu 4",
-//     url: "#",
-//     icon: Building2,
-//   },
-// ];
+import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 
 type HeaderProps = {
   onToggleMobileSidebar?: () => void;
 };
 
 const Header = ({ onToggleMobileSidebar }: HeaderProps) => {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <div className="flex h-(--header-height) shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) bg-white/-80 dark:bg-slate-900/-80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4">
       <div className="flex w-full items-center gap-1">
@@ -70,32 +44,36 @@ const Header = ({ onToggleMobileSidebar }: HeaderProps) => {
           <Button
             className="rounded-full bg-white text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             size="icon"
+            onClick={toggleTheme}
+            title={
+              theme === "light" ? "Ativar tema escuro" : "Ativar tema claro"
+            }
           >
-            <Sun className="w-5 h-5" />
+            {theme === "light" ? (
+              <Sun className="w-5 h-5" />
+            ) : (
+              <Moon className="w-5 h-5" />
+            )}
           </Button>
-          {/* Notifications */}
-          {/* <Button
-            className="relative p-2.5 rounded-full bg-white text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            size="icon-lg"
-          >
-            <Bell className="w-1 h-1" />
-            <span className="flex items-center justify-center absolute top-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full">
-              9+
-            </span>
-          </Button> */}
-          {/* Settings */}
-          {/* <Button
-            className="rounded-full bg-white text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            size="icon"
-          >
-            <Settings className="w-5 h-5" />
-          </Button> */}
-          {/* User Profile */}
-          {/* <Separator
+          <Separator
             orientation="vertical"
-            className="data-[orientation=vertical]:h-4"
-          /> */}
-          {/* <UserProfile items={items} /> */}
+            className="data-[orientation=vertical]:h-6"
+          />
+          {user ? (
+            <div className="hidden sm:flex items-center gap-2 rounded-full bg-white/70 dark:bg-slate-800/70 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+              <User className="h-4 w-4" />
+              <span>{user.name}</span>
+            </div>
+          ) : null}
+          <Button
+            type="button"
+            variant="ghost"
+            className="rounded-full hover:cursor-pointer bg-red-500/10 text-red-600 hover:bg-red-500/20 hover:text-red-700 dark:bg-red-500/20 dark:text-red-300 dark:hover:bg-red-500/30"
+            onClick={logout}
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="ml-2 hidden sm:inline">Sair</span>
+          </Button>
         </div>
       </div>
     </div>
