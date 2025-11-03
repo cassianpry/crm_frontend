@@ -73,3 +73,16 @@ export interface DeleteDialogState {
   open: boolean;
   company: { id: number; nomeFantasia: string } | null;
 }
+
+export interface ContactFormData {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+export interface ContactsManagerState {
+  editingContact: Contact | null;
+  isAddingContact: boolean;
+  contactSearchTerm: string;
+  contactFormData: ContactFormData;
+}

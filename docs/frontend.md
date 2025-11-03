@@ -26,6 +26,7 @@ src/
 │   └── ui/                 (botões, inputs, tooltip, select, badge, etc.)
 ├── contexts/              # Contextos globais (AuthProvider, ThemeProvider)
 ├── hooks/                 # Hooks customizados
+│   ├── Clients/            (useClientsSearch, useClientsSort, useDeleteDialog)
 │   ├── queries/            (React Query hooks)
 │   └── use-*.ts            (use-auth, use-theme-context, use-mobile, etc.)
 ├── lib/                   # utilidades (cn, formatadores)
@@ -39,6 +40,7 @@ src/
 - `ThemeProvider`: garante alternância light/dark baseada na preferência do usuário, persistindo a escolha no `localStorage` e sincronizando com o sistema operacional.
 - `App.tsx`: provê `QueryClientProvider`, `BrowserRouter`, Toaster de notificações e layout base com `AppSidebar`, `Header` e conteúdo principal. Detecta modo mobile via `useIsMobile` para alternar entre `AppSidebar` e `AppMobileSidebar`.
 - `components/Layout`: contém elementos de navegação, cabeçalhos e `PaginationFooter` com paginação controlada.
+- Tabelas de Clientes, Contatos e Leads utilizam ocultação progressiva de colunas (`hidden sm:table-cell`, `hidden md:table-cell`, etc.) para preservar legibilidade em telas menores.
 
 ## Fluxo de Dados
 
@@ -50,11 +52,11 @@ src/
 
 ### Clientes (`/clientes`)
 
-1. Usuário acessa a rota via sidebar → `ClientsListPage` renderiza layout com cabeçalho e CTA “Novo Cliente”.
-2. Componente `ClientsList` consulta `useCompanies`, exibe tabela com ordenação, busca com debounce (`setDebouncedSearch`), paginação (`PaginationFooter`) e ações de editar/excluir.
+1. Usuário acessa a rota via sidebar → `ClientsListPage` renderiza cabeçalho com CTA “Novo Cliente”.
+2. O componente `ClientsList` agora é totalmente componentizado (detalhes abaixo), consultando `useCompanies`, exibindo busca com debounce (`useClientsSearch`), tabela ordenável (`useClientsSort`), paginação (`PaginationFooter`) e ações de editar/excluir com confirmações.
 3. Botão “Novo Cliente” redireciona para `/clientes/novo` (formulário de criação).
 4. Ação de editar usa `navigate(/clientes/:id/editar)`; ao salvar, invalidamos cache via `useCompanies`.
-5. Exclusões disparam `useDeleteCompany`, exibindo `AlertDialog` de confirmação e `toast` de feedback.
+5. Exclusões disparam `useDeleteDialog` + `useDeleteCompany`, exibindo `AlertDialog` de confirmação e `toast` de feedback.
 
 ### Contatos (`/contatos`)
 
@@ -92,9 +94,16 @@ src/
 ## Componentes Especializados
 
 ### Clientes
-- `ClientTableHeader`: controla ordenação, responsividade e exibição condicional de colunas.
-- `ClientTableRow`: renderiza cada linha com ações de editar/excluir e integra com o modal de detalhes.
-- `ClientDetailsModal`: modal informativo que apresenta dados completos da empresa e contatos associados.
+- `ClientsTableHeader`: controla ordenação, responsividade e exibição condicional de colunas, alimentado por `useClientsSort`.
+- `ClientsTableRow`: renderiza cada linha com ações de editar/excluir e aplica regras de responsividade (`hidden sm:table-cell`, etc.).
+- `DeleteConfirmDialog`: modal de confirmação reutilizável que recebe estado do hook `useDeleteDialog`.
+- `ClientsSearchBar`: encapsula input de busca com debounce.
+- `LoadingState` / `ErrorState`: componentes enxutos para feedback visual.
+- `ClientsForm`: refatorado e componentizado em `src/components/clients/ClientsForm/`, com:
+  - hooks (`useClientForm`, `useCepLookup`, `useContactsManager`) isolando lógica de submissão, busca de CEP e CRUD de contatos;
+  - sections (`CompanyInfoSection`, `AddressSection`, `ContactSection`, `ContactsListSection`) responsáveis por cada agrupamento de campos;
+  - components (`ContactDialog`, `ContactsTable`, `FormActions`) reutilizáveis entre criação e edição.
+  - Validação do telefone aceita máscara e normaliza para 11 dígitos antes de enviar ao backend (ver `companySchema` e `useClientForm`).
 
 ### Contatos
 - `ContactTableRow`: aplica formatação de telefone, badges de status e ações contextuais.
@@ -160,7 +169,7 @@ src/
 - Funções auxiliares puras para formatação (`formatPhoneNumber`, `buildCompanyAddressLines`).
 - Uso consistente de `TooltipProvider`, `Badge` para acessibilidade e feedback visual.
 
-## Autenticação e Autorização ✅
+## Autenticação e Autorização 
 
 ### Status: IMPLEMENTADO E TESTADO
 
@@ -205,15 +214,16 @@ O frontend implementa autenticação JWT completa com proteção de rotas, persi
 - Ícones Lucide React:
   - `Mail`: campo de email
   - `Lock`: campo de senha
-  - `LogIn`: botão de submit
+  - `Eye`/`EyeOff`: alternância de visibilidade da senha
+  - `LogIn`: indicador de envio (estados de carregamento)
 - Estilização:
-  - Inputs com ícones posicionados à esquerda (`pl-10`)
-  - Botão amarelo com texto preto (`bg-yellow-500 hover:bg-yellow-400 text-black`)
-  - Cursor pointer no hover
+  - Inputs com ícones posicionados à esquerda (`pl-10`) e controles de fundo para evitar flash branco no tema escuro
+  - Botão amarelo com texto preto (`bg-yellow-500 hover:bg-yellow-400 text-black`) com `hover:cursor-pointer`
+  - Toggle de senha com botão circular (`absolute right-2`) que respeita temas claro/escuro
 - Feedback via toast (Sonner):
   - Sucesso: "Login realizado - Bem-vindo de volta!"
   - Erro: "Erro no login - Email ou senha inválidos"
-- Redirecionamento automático para `/` após login
+- Redirecionamento automático para `/agendamentos` após login
 
 #### ProtectedLayout (`src/components/Layout/ProtectedLayout.tsx`)
 - Wrapper que protege rotas privadas

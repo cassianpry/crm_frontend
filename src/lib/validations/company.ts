@@ -3,10 +3,14 @@ import { z } from "zod";
 const phoneSchema = z
   .string()
   .trim()
-  .refine((value) => value === "" || /^\d+$/.test(value), {
-    message: "Telefone deve conter apenas números",
-  })
-  .refine((value) => value === "" || value.length === 11, {
+  .refine((value) => {
+    if (value === "") {
+      return true;
+    }
+
+    const digitsOnly = value.replace(/\D/g, "");
+    return digitsOnly.length === 11;
+  }, {
     message: "Telefone deve ter 11 dígitos",
   });
 
